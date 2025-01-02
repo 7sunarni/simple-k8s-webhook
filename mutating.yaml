@@ -1,0 +1,37 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: ops-debug-webhook
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUROVENDQWgyZ0F3SUJBZ0lVQVhMT3VjNitKUy9pYWZnZE1yRU56QWdxTWk4d0RRWUpLb1pJaHZjTkFRRUwKQlFBd0tqRW9NQ1lHQTFVRUF3d2ZiM0J6TFdSbFluVm5MWGRsWW1odmIyc3ViM0J6TFdSbFluVm5Mbk4yWXpBZQpGdzB5TlRBeE1ESXdNalV6TWpOYUZ3MHpOREV5TXpFd01qVXpNak5hTUNveEtEQW1CZ05WQkFNTUgyOXdjeTFrClpXSjFaeTEzWldKb2IyOXJMbTl3Y3kxa1pXSjFaeTV6ZG1Nd2dnRWlNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0SUIKRHdBd2dnRUtBb0lCQVFERkN2YU82WTg3c2U1cWFFd01ndjlIQVE2VE1TNGoycm1McHlXR0c0UEsxNmZOWEdYTApKcHprMjBjVStNUUg0YVV0a3RpQzV5V0Y3RGJWcTNRR0hIaUY1WkFuR1NEUnEyR0lvZVBPSFc1aUxoWGs3eG1FCm5NcXZMTXpzeWlpZ2JXSDJpcWg4aGRsK0FDVURlOTdUbUwrS3VGSXM1cWV4SnBjMEVBaTRpbXp5VlhUNTlUQUQKS0FMbVN0UzZwNGJ1QWxXSEIvVndnYXZXOStVaERqZGtQM09nSXN0VUxVcGpyL0dPc25sOElZQWNEa3FTUkR1aAphSUxjRXJBVGNoVmRlUGpZckZuS1ROZTBVS1NYWUYzRkI3dm44VDB1TWtJaUlzMEpPM0NiYmtQRStIS3VVTkpwClZWYU5FdGtoU09oVGtiSmJjTjNpZkhKbjNmaEcwMFlJQnZ3bEFnTUJBQUdqVXpCUk1CMEdBMVVkRGdRV0JCVFoKM2JDazFNK1F3My92dE9lWGxXZGZlc3hGSFRBZkJnTlZIU01FR0RBV2dCVFozYkNrMU0rUXczL3Z0T2VYbFdkZgplc3hGSFRBUEJnTlZIUk1CQWY4RUJUQURBUUgvTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFCTWlUcWZEc2FYCnZjdnNsTUJVR3kxVi9tbE4ycFFYV08xWStFbG45Qm52TnIxb2lKeXZBNDliTHJKTVVVUlk1VjNWL2ZhU2xHVVgKandhTVRiVmM2aXMyQkdoQzg2bzgxcmIrS3NEWXBrcEdINVRydDJGYUVIS0QyVFVVMEovKzlmUUNwcTNubFFnRQpHZ0tvZFVidlRwUU9tQTY3WmFLVC9yanhFLytGYWFGTnUvT2Z6TmNBdngvcmozdDNuQ0cwVkRHVFlWVW1weG9vCnFTc1BkQVA3VEFSSXNmU3A5N09Vak1TZnpPWWxScytQdG5lRGpYbWkvZE1pcmcrREh4aEQvUXU4b3JJR2Q4SFoKenBJblV4V3d3TU00REYvdlVDUG85eWh3dGVZNXk4WDR5UXljR2w4V0F2eFdkeHdKa0ZJOGdncFR3V2ZvUTl3VgpkSnFHZmVLTkM5MU0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    service:
+      name: ops-debug-webhook
+      namespace: ops-debug
+      path: /mutate
+      port: 6443
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: ops-debug-webhook.ops-debug.mutating
+  # namespaceSelector:
+  #   matchExpressions:
+  #   - key: kubernetes.io/metadata.name
+  #     operator: NotIn
+  #     values:
+  #     - kube-system
+  objectSelector: {}
+  reinvocationPolicy: Never
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - "*"
+    resources:
+    - services
+    scope: '*'
+  sideEffects: NoneOnDryRun
+  timeoutSeconds: 10
