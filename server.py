@@ -8,7 +8,8 @@ class SimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         post_data = self.rfile.read(content_length)
         try:
             request_json = json.loads(post_data.decode('utf-8'))
-            print(f"Mutate: {request_json}")
+            pretty_json = json.dumps(request_json, ensure_ascii=False, indent=4, sort_keys=True)
+            print(f"Mutate Request: {pretty_json}")
             uid = request_json["request"]["uid"]
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
