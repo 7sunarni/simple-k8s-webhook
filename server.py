@@ -3,6 +3,48 @@ import ssl
 import json
 
 class SimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+    # For response Aggregate APISerivce request
+    def do_GET(self):
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {
+                "kind": "APIResourceList",
+                "apiVersion": "v1",
+                "groupVersion": "ops-debug.ctyun.cn/v1alpha1",
+                "resources": [
+                    {
+                    "name": "backups",
+                    "singularName": "",
+                    "namespaced": True,
+                    "kind": "Backup",
+                    "verbs": [
+                        "create",
+                        "delete",
+                        "deletecollection",
+                        "get",
+                        "list",
+                        "patch",
+                        "update",
+                        "watch"
+                    ],
+                    "storageVersionHash": "IWRSucd/Dbc="
+                    },
+                    {
+                        "name": "backups/status",
+                        "singularName": "",
+                        "namespaced": True,
+                        "kind": "Backup",
+                        "verbs": [
+                            "get",
+                            "patch",
+                            "update"
+                    ]
+                    }
+                ]
+            }
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+            return
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)

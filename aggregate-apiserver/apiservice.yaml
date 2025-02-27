@@ -1,0 +1,14 @@
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1.ops-debug.ctyun.cn
+spec:
+  group: ops-debug.ctyun.cn
+  insecureSkipTLSVerify: true
+  groupPriorityMinimum: 1000
+  versionPriority: 15
+  service:
+    name: ops-debug-webhook
+    namespace: ops-debug
+    port: 6443
+  version: v1
