@@ -1,3 +1,10 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ops-debug
+  namespace: ops-debug
+---
 apiVersion: v1
 data:
   ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUROVENDQWgyZ0F3SUJBZ0lVQVhMT3VjNitKUy9pYWZnZE1yRU56QWdxTWk4d0RRWUpLb1pJaHZjTkFRRUwKQlFBd0tqRW9NQ1lHQTFVRUF3d2ZiM0J6TFdSbFluVm5MWGRsWW1odmIyc3ViM0J6TFdSbFluVm5Mbk4yWXpBZQpGdzB5TlRBeE1ESXdNalV6TWpOYUZ3MHpOREV5TXpFd01qVXpNak5hTUNveEtEQW1CZ05WQkFNTUgyOXdjeTFrClpXSjFaeTEzWldKb2IyOXJMbTl3Y3kxa1pXSjFaeTV6ZG1Nd2dnRWlNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0SUIKRHdBd2dnRUtBb0lCQVFERkN2YU82WTg3c2U1cWFFd01ndjlIQVE2VE1TNGoycm1McHlXR0c0UEsxNmZOWEdYTApKcHprMjBjVStNUUg0YVV0a3RpQzV5V0Y3RGJWcTNRR0hIaUY1WkFuR1NEUnEyR0lvZVBPSFc1aUxoWGs3eG1FCm5NcXZMTXpzeWlpZ2JXSDJpcWg4aGRsK0FDVURlOTdUbUwrS3VGSXM1cWV4SnBjMEVBaTRpbXp5VlhUNTlUQUQKS0FMbVN0UzZwNGJ1QWxXSEIvVndnYXZXOStVaERqZGtQM09nSXN0VUxVcGpyL0dPc25sOElZQWNEa3FTUkR1aAphSUxjRXJBVGNoVmRlUGpZckZuS1ROZTBVS1NYWUYzRkI3dm44VDB1TWtJaUlzMEpPM0NiYmtQRStIS3VVTkpwClZWYU5FdGtoU09oVGtiSmJjTjNpZkhKbjNmaEcwMFlJQnZ3bEFnTUJBQUdqVXpCUk1CMEdBMVVkRGdRV0JCVFoKM2JDazFNK1F3My92dE9lWGxXZGZlc3hGSFRBZkJnTlZIU01FR0RBV2dCVFozYkNrMU0rUXczL3Z0T2VYbFdkZgplc3hGSFRBUEJnTlZIUk1CQWY4RUJUQURBUUgvTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFCTWlUcWZEc2FYCnZjdnNsTUJVR3kxVi9tbE4ycFFYV08xWStFbG45Qm52TnIxb2lKeXZBNDliTHJKTVVVUlk1VjNWL2ZhU2xHVVgKandhTVRiVmM2aXMyQkdoQzg2bzgxcmIrS3NEWXBrcEdINVRydDJGYUVIS0QyVFVVMEovKzlmUUNwcTNubFFnRQpHZ0tvZFVidlRwUU9tQTY3WmFLVC9yanhFLytGYWFGTnUvT2Z6TmNBdngvcmozdDNuQ0cwVkRHVFlWVW1weG9vCnFTc1BkQVA3VEFSSXNmU3A5N09Vak1TZnpPWWxScytQdG5lRGpYbWkvZE1pcmcrREh4aEQvUXU4b3JJR2Q4SFoKenBJblV4V3d3TU00REYvdlVDUG85eWh3dGVZNXk4WDR5UXljR2w4V0F2eFdkeHdKa0ZJOGdncFR3V2ZvUTl3VgpkSnFHZmVLTkM5MU0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
@@ -21,11 +28,13 @@ spec:
   - command:
     - bash 
     - -c 
-    - sleep infinity
-    image: python:3.8-slim
+    - exec python server/server.py
+    image: python:3.8
     imagePullPolicy: IfNotPresent
     name: ops-webhook
     volumeMounts:
+    - mountPath: /server
+      name: server
     - mountPath: /certs
       name: cert
   dnsPolicy: ClusterFirst
@@ -33,6 +42,9 @@ spec:
   schedulerName: default-scheduler
   terminationGracePeriodSeconds: 30
   volumes:
+  - name: server
+    configMap:
+      name: ops-debug
   - name: cert
     secret:
       secretName: ops-debug-webhook
@@ -54,3 +66,102 @@ spec:
     app: ops-debug-webhook
   sessionAffinity: None
   type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ops-debug
+  namespace: ops-debug
+data:
+  server.py: |
+    import http.server
+    import ssl
+    import json
+    
+    class SimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+        # For response Aggregate APISerivce request
+        def do_GET(self):
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                response = {
+                    "kind": "APIResourceList",
+                    "apiVersion": "v1",
+                    "groupVersion": "ops-debug.ctyun.cn/v1alpha1",
+                    "resources": [
+                        {
+                        "name": "backups",
+                        "singularName": "",
+                        "namespaced": True,
+                        "kind": "Backup",
+                        "verbs": [
+                            "create",
+                            "delete",
+                            "deletecollection",
+                            "get",
+                            "list",
+                            "patch",
+                            "update",
+                            "watch"
+                        ],
+                        "storageVersionHash": "IWRSucd/Dbc="
+                        },
+                        {
+                            "name": "backups/status",
+                            "singularName": "",
+                            "namespaced": True,
+                            "kind": "Backup",
+                            "verbs": [
+                                "get",
+                                "patch",
+                                "update"
+                        ]
+                        }
+                    ]
+                }
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+                return
+        def do_POST(self):
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            try:
+                request_json = json.loads(post_data.decode('utf-8'))
+                pretty_json = json.dumps(request_json, ensure_ascii=False, indent=4, sort_keys=True)
+                print(f"Mutate Request: {pretty_json}")
+                uid = request_json["request"]["uid"]
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                response = {
+                    "apiVersion": "admission.k8s.io/v1",
+                    "kind": "AdmissionReview",
+                    "response": {
+                        "uid": uid,
+                        "allowed": True
+                    }
+                }
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+            # TODO: fix here
+            except json.JSONDecodeError as e:
+                self.send_response(400)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                response = {
+                    'status': 'error',
+                    'message': str(e)
+                }
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+    
+    
+    def run_https_server(port, handler_class=SimpleHTTPRequestHandler):
+        server_address = ('', port)
+        httpd = http.server.HTTPServer(server_address, handler_class)
+        httpd.socket = ssl.wrap_socket(httpd.socket,
+                                       keyfile='/certs/server.key',
+                                       certfile='/certs/server.crt',
+                                       server_side=True)
+        print(f'Starting HTTPS server on port {port}...')
+        httpd.serve_forever()
+    if __name__ == '__main__':
+        PORT = 6443
+        run_https_server(PORT)

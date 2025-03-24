@@ -8,7 +8,6 @@ kubectl create ns ops-debug
 kubectl apply -f worker.yaml
 # edit mutating for resource you want to watch
 kubectl apply -f mutating.yaml
-kubectl exec -it -n ops-debug ops-debug-webhook -- bash
-python server.py 
 # view log
+kubectl logs -n ops-debug ops-debug-webhook -f
 ```
