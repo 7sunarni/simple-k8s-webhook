@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sshd-server
+  namespace: ops-debug
+  labels:
+    app: sshd-server
+spec:
+  containers:
+  - image: circleci/sshd:0.1
+    imagePullPolicy: IfNotPresent
+    name: sshd-server
+    volumeMounts:
+    - mountPath: /etc/ssh/sshd_config
+      name: sshd-config
+      subPath: sshd_config
+    - mountPath: /etc/ssh/authorized_keys
+      name: authorized-keys
+      subPath: authorized_keys
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  terminationGracePeriodSeconds: 30
+  volumes:
+  - name: sshd-config
+    configMap:
+      name: sshd-config
+  - name: authorized-keys
+    configMap:
+      name: authorized-keys  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: sshd-server
+  name: sshd-server
+  namespace: ops-debug
+spec:
+  ports:
+  - name: webhook
+    port: 6443
+    protocol: TCP
+    targetPort: 6443
+  selector:
+    app: sshd-server
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authorized-keys
+  namespace: ops-debug
+data:
+  authorized_keys: |
+    $your_pub_key
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sshd-config
+  namespace: ops-debug
+data:
+  sshd_config: |
+    Port 22222
+    PermitRootLogin yes
+    AuthorizedKeysFile     /etc/ssh/authorized_keys
+    ChallengeResponseAuthentication no
+    UsePAM yes
+    AllowAgentForwarding yes
+    AllowTcpForwarding yes
+    GatewayPorts yes
+    X11Forwarding yes
+    PrintMotd no
